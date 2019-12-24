@@ -3,64 +3,7 @@ name: Mercury Health Core CI/CD
 on: [push]
 
 jobs:
-  # build .net core web app
-  buildWeb:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v1
-
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 2.2.108
-    
-    - name: Build with dotnet
-      run: |
-        echo ls
-        ls
-        dotnet build Web/MercuryHealthCore.csproj --configuration Release
-
-    - name: Test with dotnet
-      run: dotnet test Web/MercuryHealthCore.csproj --configuration Release
       
-    - name: Package everything up with dotnet
-      run: dotnet publish Web/MercuryHealthCore.csproj --configuration Release
-
-    - name: publish build artifacts back to GitHub
-      uses: actions/upload-artifact@master
-      with:
-        name: webapp
-        path: Web/bin/Release/netcoreapp2.2/publish
-
-  # build database schema, build artifact is the dacpac
-  buildDatabase:
-    runs-on: windows-latest
-
-    steps:
-    # checkout code from repo
-    - name: checkout repo
-      uses: actions/checkout@v1
-
-    # use msbuild to build VS solution which has the SSDT project
-    - name: build solution
-      run: |
-        echo "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\bin\MSBuild.exe MercuryHealthCore.sln"
-        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe" MercuryHealthCore.sln
-    
-    # look for dacpac
-    - name: find dacpac
-      run: |
-        echo "ls d:\a\MercuryHealthCore\MercuryHealthCore\MercuryHealthDB\bin\Debug\"
-        ls "%GITHUB_WORKSPACE%\MercuryHealthDB\bin\Debug"
-      
-    # publish build artifact (dacpac) back to github
-    - name: publish build artifacts back to GitHub
-      uses: actions/upload-artifact@master
-      with:
-        name: db
-        path: MercuryHealthDB\bin\Debug
-
   # publish IaC as build artifact
   uploadIaC:
     runs-on: windows-latest
@@ -144,29 +87,4 @@ jobs:
           package: webapp  # Specify the folder or file to deploy
           publish-profile: ${{ secrets.PUBLISH_PROFILE }}  # Replace with the name of your publish profile
 
-  # deploy new database schema using dacpac
-  deployDB:
-      needs: [buildDatabase, provisionInfra]
-      runs-on: windows-latest
-      steps:
-      # download build artifacts
-      - name: download build artifacts
-        uses: actions/download-artifact@master
-        with: 
-          name: db
-
-      # deploy dacpac calling my dacpac-deploy task
-      - name: update database schema using dacpac deploy action
-        uses: abelsquidhead/dacpac-deploy@master
-        with:
-          connectionString: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          dacpac: 'db\MercuryHealthDB.dacpac'
-          additionalArguments: '/p:BlockOnPossibleDataLoss=False'
-
-      # deploy dacpac calling my dacpac-deploy task
-      - name: update database schema using dacpac deploy action
-        uses: abelsquidhead/dacpac-deploy@master
-        with:
-          connectionString: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          dacpac: 'db\MercuryHealthDB.dacpac'
-          additionalArguments: '/p:BlockOnPossibleDataLoss=False'
+ 
