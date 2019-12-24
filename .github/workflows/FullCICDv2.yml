@@ -37,18 +37,17 @@ jobs:
 
     - name: provision webapp and db infrastructure in azure
       env:
-        SERVICE_PRINCIPAL: http://AbelDeployPrincipal
+        SERVICE_PRINCIPAL: http://SarahDeployPrincipal
         SERVICE_PRINCIPAL_TENANT: 72f988bf-86f1-41af-91ab-2d7cd011db47
-        AZURE_SUBSCRIPTION_NAME: ca-abewan-demo-test
+        AZURE_SUBSCRIPTION_NAME: "Microsoft Azure Internal Consumption"
         RESOURCE_GROUP: mercuryhealthcore-rg
         RESOURCE_GROUP_REGION: southcentralus
-        SERVER_NAME: abelmercuryhealthcoredbserverbeta
+        SERVER_NAME: mercuryhealthcoredbserverbeta
         DB_LOCATION: southcentralus
         ADMIN_LOGIN: abel
         START_IP: 0.0.0.0
         END_IP: 0.0.0.0
-        DB_NAME: abelmercuryhealthcoredbbeta
-        WEB_APP_NAME: abelmercuryhealthcore-beta
+        DB_NAME: amercuryhealthcoredbbeta
         ENVIRONMENT: "[beta]"
       run: >
         powershell -command "& '%GITHUB_WORKSPACE%\IaC\AzCLI\provisionWebAndDB.ps1'" 
@@ -68,23 +67,6 @@ jobs:
         -webAppName %WEB_APP_NAME% 
         -environment %ENVIRONMENT%
 
-  # deploy web app to azure app service
-  deployWeb:
-      needs: [buildWeb, provisionInfra]
-      runs-on: windows-latest
-      steps:
-      # download build artifacts
-      - name: download build artifacts
-        uses: actions/download-artifact@master
-        with: 
-          name: webapp
-
-      # Deploy build artifact to Azure App Service
-      - name: Publish website to Azure App Service
-        uses: azure/appservice-actions/webapp@master
-        with:
-          app-name: abelmercurywebcore  # Replace with your app name
-          package: webapp  # Specify the folder or file to deploy
-          publish-profile: ${{ secrets.PUBLISH_PROFILE }}  # Replace with the name of your publish profile
+  
 
  
